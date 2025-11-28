@@ -1,0 +1,20 @@
+# Dockerfile.backend (updated to forward localhost:27017 -> mongo:27017)
+FROM node:18-alpine AS build
+WORKDIR /usr/src/app
+
+# install socat at build time using apk in final image
+COPY backend/package*.json ./
+RUN npm install --production
+
+COPY backend/ .
+
+# copy the entrypoint script into image and install socat
+COPY backend/entrypoint.sh /usr/src/app/entrypoint.sh
+RUN apk add --no-cache socat \
+    && chmod +x /usr/src/app/entrypoint.sh
+
+# expose backend port
+EXPOSE 3000
+
+# use entrypoint script to launch socat and then the Node server
+ENTRYPOINT ["/usr/src/app/entrypoint.sh"]
